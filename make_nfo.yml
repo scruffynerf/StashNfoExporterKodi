@@ -1,0 +1,14 @@
+name: Stash NFO Exporter for Kodi
+description: Makes NFO and playlist files from Stash for Kodi automatically 
+version: 0.1
+url: https://github.com/scruffynerf/StashNfoExporterKodi
+exec:
+  - python
+  - "{pluginDir}/make_nfo.py"
+interface: raw
+hooks:
+  - name: Add NFO and stream files
+    description: Makes NFO and streaming playlist files for scenes
+    triggeredBy:
+      - Scene.Create.Post
+      - Scene.Update.Post
