@@ -20,6 +20,10 @@ it's just a frontend UI for Kodi to talk to Stash.  There are Kodi->Stash addons
 This is the opposite: Stash code, that makes something Kodi can process, and no code on the Kodi side.  
 There is value in each approach, and I'll likely tackle the other side next.
 
+## Installation:
+
+Download (zip or git clone) into a folder in your plugin directory that Stash knows about.  Reload plugins.  Visit the tasks page to enable or disable the plugin (or edit the config file)
+
 ### By default:
 If your Stash instance url is `'localhost'` or `'127.0.0.1'`, or other non-routable address,
 and you need it to be `192.168.1.xxx` or `10.1.x.x` or even Internet accessible, 
