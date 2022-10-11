@@ -67,7 +67,7 @@ Studio logos are available, but not well supported by most skins (still looking 
 If/When Stash adds more image support, I'll update this.
 
 ### Not done and might work on it:
-- Delete old NFO/strm files if name changes or scene is deleted
+- Delete old NFO/strm files if name changes or scene is deleted (you can combine with renamerOnUpdate plugin to help with that)
 - Make subdirectories, instead of one big directory full.
 - Export images for each video (would require separate directories first)
 
