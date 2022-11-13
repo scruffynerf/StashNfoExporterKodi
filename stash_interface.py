@@ -24,7 +24,9 @@ class StashInterface:
             'session': conn.get('SessionCookie').get('Value')
         }
 
-        domain = conn.get('Domain') if conn.get('Domain') else 'localhost'
+        domain = conn.get('Host') or 'localhost'
+        if domain == "0.0.0.0":
+            domain = "localhost"
 
         # Stash GraphQL endpoint
         self.url = scheme + "://" + domain + ":" + str(self.port) + "/graphql"
@@ -64,8 +66,8 @@ class StashInterface:
 
         if response.status_code == 200:
             result = response.json()
-            if result.get("error", None):
-                for error in result["error"]["errors"]:
+            if result.get("errors", None):
+                for error in result["errors"]:
                     raise Exception("GraphQL error: {}".format(error))
             if result.get("data", None):
                 return result.get("data")
@@ -78,7 +80,7 @@ class StashInterface:
             )
 
     def graphql_query(self, query, variables=None):
-         return self.__callGraphQL(query, variables)
+        return self.__callGraphQL(query, variables)
 
     def get_scenes_id(self, filter={}):
         query = """
@@ -155,6 +157,7 @@ class StashInterface:
         path
         phash
         interactive
+        created_at
         file {
             size
             duration
