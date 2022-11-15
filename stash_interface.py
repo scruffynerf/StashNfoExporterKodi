@@ -174,7 +174,6 @@ class StashInterface:
             stream
             webp
             vtt
-            chapters_vtt
             sprite
             funscript
         }
