@@ -6,6 +6,7 @@ import log
 
 from stash_interface import StashInterface
 import config
+import urllib.request
 
 def basename(f):
     f = os.path.normpath(f)
@@ -15,6 +16,34 @@ def xmlSafe(text):
     if text:
         return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
     return text
+
+def VersionFile(filename):
+
+    if os.path.isfile(filename):
+
+        # Determine root filename so extension doesn't get longer
+        n, e = os.path.splitext(filename)
+
+        # Is e a three-digit integer preceded by a dot
+        if len(e) == 4 and e[1:].isdigit():
+            num = 1 + int(e[1:])
+            root = n
+        else:
+            num = 0
+            root = filename
+
+        # Find the next available file version
+        for i in range(num, 1000):
+
+            new_file = "%s.%03d" % (root, i)
+
+            if not os.path.exists(new_file):
+                os.rename(filename, new_file)
+                return True
+
+        raise RuntimeError("Can't {} {!r}, all name taken".format(vtype, filename))
+
+    return False
 
 def getOutputSTRMFile(scene):
     if config.filename == "filename":
@@ -26,13 +55,19 @@ def getOutputSTRMFile(scene):
         log.error("Check your config file.")
 
 def getOutputNFOFile(scene):
-    if config.filename == "filename":
-        return os.path.join(config.save_path, "{}.nfo".format(os.path.splitext(basename(scene["path"]))[0]))
-    elif config.save_path == "with files":
+    if config.save_path == "with files":
         return os.path.join(os.path.dirname(scene["path"]), "{}.nfo".format(os.path.splitext(basename(scene["path"]))[0]))
+    elif config.filename == "filename":
+        return os.path.join(config.save_path, "{}.nfo".format(os.path.splitext(basename(scene["path"]))[0]))
     elif config.filename == "stashid":
         sceneID = scene["id"]
         return os.path.join(config.save_path, "{}.nfo".format(sceneID))
+    else:
+        log.error("Check your config file.")
+
+def getOutputPosterFile(scene):
+    if config.save_path == "with files":
+        return os.path.join(os.path.dirname(scene["path"]), "{}-poster.jpg".format(os.path.splitext(basename(scene["path"]))[0]))
     else:
         log.error("Check your config file.")
 
@@ -42,31 +77,55 @@ def getSceneTitle(scene):
     return basename(scene["path"])
 
 def getGenreTags():
-    query = """
-    {
-      findTags(
-        tag_filter: {name: {value: """ + '"' + config.genre_parentname + '"' + """ , modifier: EQUALS}}
-        filter: {per_page: -1}
-      ) {
-        count
-        tags {
-          id
-          name
-          children {
-            name
+    if config.genre_parentname != "":
+        query = """
+        {
+        findTags(
+            tag_filter: {name: {value: """ + '"' + config.genre_parentname + '"' + """ , modifier: EQUALS}}
+            filter: {per_page: -1}
+        ) {
+            count
+            tags {
             id
-          }
+            name
+            children {
+                name
+                id
+            }
+            }
         }
-      }
-    }
-    """
-    results = stash.graphql_query(query)
-    if not results["findTags"]["tags"]:
-        log.warning("'genre_parentname' tag not found in stash. Check README & config.")
-        return []
+        }
+        """
+        results = stash.graphql_query(query)
+        if not results["findTags"]["tags"]:
+            log.warning("'genre_parentname' tag not found in stash. Check README & config.")
+            return []
+        else:
+            resultschildren = results["findTags"]["tags"][0]["children"]
+            return get_ids(resultschildren)
     else:
-        resultschildren = results["findTags"]["tags"][0]["children"]
-        return get_ids(resultschildren)
+        query = """
+        {
+        findTags(
+            tag_filter: {parent_count: {value: 0 , modifier: EQUALS}}
+            filter: {per_page: -1}
+        ) {
+            count
+            tags {
+            id
+            name
+            }
+        }
+        }
+        """
+        results = stash.graphql_query(query)
+        if not results["findTags"]["tags"]:
+            log.warning("tags not found in stash. Check README & config.")
+            return []
+        else:
+            resultschildren = results["findTags"]["tags"]
+            return get_ids(resultschildren)
+
 
 def get_ids(obj):
     ids = []
@@ -89,6 +148,30 @@ def generateSTRM(scene):
             return "#EXTM3U\n#EXTINF:" + str(int(scene["file"]["duration"])) + "," + getSceneTitle(scene) + "\n" + URLrewrite(scene["paths"]["stream"])
     else:
         return URLrewrite(scene["paths"]["stream"])
+
+def checkmovie(scene):
+    if "movies" in scene:
+        for mlist in scene["movies"]:
+            m = mlist["movie"]
+            if "id" in m:
+                return True
+    return False
+
+def saveposter(scene, poster):
+    gotposter = False
+    if "movies" in scene:
+        for mlist in scene["movies"]:
+            m = mlist["movie"]
+            if "front_image_path" in m:
+                posterurl = m["front_image_path"]
+                if posterurl is not None:
+                    urllib.request.urlretrieve(posterurl, poster)
+                    gotposter = True
+    # no movie poster, so let's (sadly) include the landscape screenshot as the poster, until we can do better.
+    if gotposter == False:
+        posterurl = scene["paths"]["screenshot"]
+        urllib.request.urlretrieve(posterurl, poster)
+
 
 def generateNFO(scene):
     ret = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -239,8 +322,17 @@ def main():
     sceneID = json_input['args']['hookContext']['id']
     scene = stash.getScene(sceneID)
 
+    if config.onlymovie == True:
+        if not checkmovie(scene):
+            log.debug("Scene has no movie and onlymovie setting is active. Exiting.")
+            sys.exit()
+
     # For existing nfo, config defines wether to proceed with generation or not...
     nfofilename = getOutputNFOFile(scene)
+    log.debug("NFO Filename is "+ nfofilename)
+    # Create Version if enabled
+    if config.versioning:
+        VersionFile(nfofilename)
     if (not scene["organized"] and config.generate_when == "organized") or \
        (os.path.exists(nfofilename) and config.generate_when == "new"):
         # Skip generation...
@@ -249,6 +341,10 @@ def main():
     useUTF = True
     nfo = generateNFO(scene)
     writeFile(nfofilename, nfo, useUTF)
+
+    if (config.save_path == "with files" and config.saveposter == True):
+        poster = getOutputPosterFile(scene)
+        saveposter(scene, poster)
 
     if config.save_path != "with files":
         useUTF = False
