@@ -1,6 +1,6 @@
 name: Stash NFO Exporter for Kodi
 description: Makes NFO and playlist files from Stash for Kodi automatically 
-version: 0.1
+version: 0.2
 url: https://github.com/scruffynerf/StashNfoExporterKodi
 exec:
   - python
