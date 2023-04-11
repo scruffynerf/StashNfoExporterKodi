@@ -20,7 +20,7 @@ def xmlSafe(text):
 def VersionFile(filename):
 
     if os.path.isfile(filename):
-
+        log.debug("Version File with filename " + filename)
         # Determine root filename so extension doesn't get longer
         n, e = os.path.splitext(filename)
 
@@ -36,7 +36,8 @@ def VersionFile(filename):
         for i in range(num, 1000):
 
             new_file = "%s.%03d" % (root, i)
-
+            new_file = os.path.dirname(new_file) + '/' + '.' + os.path.basename(new_file)
+            log.debug ("New Filename is " + new_file)
             if not os.path.exists(new_file):
                 os.rename(filename, new_file)
                 return True
@@ -330,15 +331,15 @@ def main():
     # For existing nfo, config defines wether to proceed with generation or not...
     nfofilename = getOutputNFOFile(scene)
     log.debug("NFO Filename is "+ nfofilename)
-    # Create Version if enabled
-    if config.versioning:
-        VersionFile(nfofilename)
     if (not scene["organized"] and config.generate_when == "organized") or \
        (os.path.exists(nfofilename) and config.generate_when == "new"):
         # Skip generation...
         sys.exit()
 
     useUTF = True
+    # Create Version if enabled
+    if config.versioning:
+        VersionFile(nfofilename)
     nfo = generateNFO(scene)
     writeFile(nfofilename, nfo, useUTF)
 
