@@ -122,7 +122,9 @@ class StashInterface:
                 configuration {
                     general{
                         stashes{
-                            path
+                            files{
+                                path
+                            }
                             excludeVideo
                         }
                     }
@@ -145,28 +147,26 @@ class StashInterface:
     }
     fragment SceneData on Scene {
         id
-        checksum
-        oshash
         title
         details
         url
         date
-        rating
         o_counter
         organized
-        path
-        phash
         interactive
+        rating100
+        director
         created_at
-        file {
+        files {
+            path
             size
             duration
             video_codec
             audio_codec
             width
             height
-            framerate
-            bitrate
+            frame_rate
+            bit_rate
         }
         paths {
             screenshot
@@ -226,17 +226,17 @@ class StashInterface:
     }
     fragment SlimGalleryData on Gallery {
         id
-        checksum
-        path
+        files {
+            path
+        }
         title
         date
         url
         details
-        rating
         organized
         image_count
         cover {
-            file {
+            files {
                 size
                 width
                 height
@@ -264,7 +264,9 @@ class StashInterface:
         scenes {
             id
             title
-            path
+            files {
+                path
+            }
         }
     }
     fragment SlimStudioData on Studio {
@@ -279,17 +281,14 @@ class StashInterface:
             id
         }
         details
-        rating
         aliases
     }
     fragment MovieData on Movie {
         id
-        checksum
         name
         aliases
         duration
         date
-        rating
         director
         studio {
             ...SlimStudioData
@@ -302,7 +301,9 @@ class StashInterface:
         scenes {
             id
             title
-            path
+            files{
+                path
+            }
         }
     }
     fragment SlimTagData on Tag {
@@ -313,7 +314,6 @@ class StashInterface:
     }
     fragment PerformerData on Performer {
         id
-        checksum
         name
         url
         gender
@@ -323,13 +323,13 @@ class StashInterface:
         ethnicity
         country
         eye_color
-        height
+        height_cm
         measurements
         fake_tits
         career_length
         tattoos
         piercings
-        aliases
+        alias_list
         favorite
         image_path
         scene_count
@@ -343,7 +343,6 @@ class StashInterface:
             stash_id
             endpoint
         }
-        rating
         details
         death_date
         hair_color

@@ -13,7 +13,7 @@ save_path = "with files"
 #
 # filenaming options: stashid or filename?  stashid (a number) is cleaner, and sure to be updated (and not orphaned), even if the filename changes.
 # if you set the above to "with files", it'll force filename anyway, to match the filename.
-filename = "stashid"
+filename = "filename"
 #
 # name of playlist file extension
 # choices: strm, or m3u, or m3u8
@@ -24,8 +24,8 @@ playlist_ext = "strm"
 # Use false if you are using some non-Kodi application that doesn't support it, and you just want a pure URL strm file.
 m3u = True
 #
-# name of tag that is parent of Genre tags, so we can label Genres
-genre_parentname = "Themes"
+# name of tag that is parent of Genre tags, so we can label Genres. If set to empty ("") only main tags without children will be used as genre
+genre_parentname = ""
 #
 # When should the nfo be generated?
 # Possible overwrite values are:
@@ -33,3 +33,10 @@ genre_parentname = "Themes"
 # - "new": will only generate the missing nfo (skip if nfo already exists, generate otherwise)
 # - "organized": will generate/overwrite an nfo only the the scene is flagged as "organized"
 generate_when = "organized"
+#
+# if set to true, an existing .nfo file is versioned instead of overwritten 
+versioning = True
+# if set to true, Poster will be written alongside with the NFO (only works if save path is set to "with files")
+saveposter = True
+# if set to true, only scenes that have a movie linked will generate an nfo
+onlymovie = True
